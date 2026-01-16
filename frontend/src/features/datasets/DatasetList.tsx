@@ -1,22 +1,31 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { fetchDatasets, analyzeDataset, setCurrentDataset } from './datasetsSlice';
-import { Dataset, DatasetStatus } from '../../services/api';
+import { fetchDatasets, analyzeDataset } from './datasetsSlice';
+import { DatasetStatus } from '../../services/api';
 
 const DatasetList = () => {
+    console.log('=== RENDER DatasetList ==='); // ← ДЕБАГ
+
     const dispatch = useAppDispatch();
-    const { items: datasets, loading, error } = useAppSelector((state) => state.datasets);
+    const navigate = useNavigate();
+    const { items: datasets, loading, error } = useAppSelector(
+        (state) => state.datasets
+    );
+
+    console.log('Datasets data:', datasets); // ← ДЕБАГ
 
     useEffect(() => {
-        dispatch(fetchDatasets());
-    }, [dispatch]);
+        if (datasets.length === 0 && !loading) {
+            dispatch(fetchDatasets());
+        }
+    }, [dispatch, datasets.length, loading]);
 
-    const handleAnalyze = (dataset: Dataset) => {
+    const handleAnalyze = (dataset: any) => {
         if (dataset.status === 'uploaded') {
             dispatch(analyzeDataset(dataset.id))
                 .unwrap()
                 .then(() => {
-                    // После успешного анализа обновляем список
                     dispatch(fetchDatasets());
                 });
         }
@@ -86,7 +95,7 @@ const DatasetList = () => {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {datasets.map((dataset) => (
+                    {datasets.map((dataset: any) => (
                         <div
                             key={dataset.id}
                             className="border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200"
@@ -109,7 +118,7 @@ const DatasetList = () => {
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-400">🔢</span>
                                             <span>
-                                                {dataset.checks.length} проверок
+                                                {dataset.checks?.length || 0} проверок
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -128,10 +137,10 @@ const DatasetList = () => {
                                 {/* Правая часть: кнопки действий */}
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <button
-                                        onClick={() => dispatch(setCurrentDataset(dataset))}
+                                        onClick={() => navigate(`/dataset/${dataset.id}`)}
                                         className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 flex items-center justify-center gap-2"
                                     >
-                                        👁️ Просмотр
+                                        👁️ Подробнее
                                     </button>
 
                                     {dataset.status === 'uploaded' && (
@@ -145,7 +154,7 @@ const DatasetList = () => {
 
                                     {dataset.status === 'completed' && (
                                         <button
-                                            onClick={() => dispatch(setCurrentDataset(dataset))}
+                                            onClick={() => navigate(`/dataset/${dataset.id}`)}
                                             className="px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 flex items-center justify-center gap-2"
                                         >
                                             📄 Отчёт
@@ -163,7 +172,7 @@ const DatasetList = () => {
                                 </div>
                             </div>
 
-                            {/* Детали при клике (можно добавить позже) */}
+                            {/* Детали при клике */}
                             {dataset.report?.summary && (
                                 <div className="mt-4 pt-4 border-t border-gray-100">
                                     <p className="text-gray-700 line-clamp-2">

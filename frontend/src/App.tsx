@@ -1,6 +1,8 @@
 import React from 'react';
+import { Routes, Route } from 'react-router-dom'; // Импорт маршрутизации
 import FileUploader from './features/upload/FileUploader';
 import DatasetList from './features/datasets/DatasetList';
+import DatasetDetails from './features/datasets/DatasetDetails';
 import './App.css';
 
 function App() {
@@ -21,109 +23,119 @@ function App() {
         </div>
       </header>
 
-      {/* Основной контент */}
+      {/* Основной контент С МАРШРУТИЗАЦИЕЙ */}
       <main className="max-w-7xl mx-auto">
-        {/* Верхняя часть: Загрузка + Инфо-панель */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* Колонка загрузки (8/12 ширины) */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100 h-full">
-              <FileUploader />
-            </div>
-          </div>
-
-          {/* Колонка информационных карточек (4/12 ширины) */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-6 space-y-5">
-              {/* Компактная карточка "Как это работает" */}
-              <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-lg p-5 border border-blue-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl">
-                    <span className="text-2xl text-white">⚙️</span>
+        <Routes>
+          {/* Главная страница */}
+          <Route path="/" element={
+            <>
+              {/* Верхняя часть: Загрузка + Инфо-панель */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                {/* Колонка загрузки (8/12 ширины) */}
+                <div className="lg:col-span-8">
+                  <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100 h-full">
+                    <FileUploader />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-800">Как это работает</h2>
                 </div>
-                <div className="space-y-3.5">
-                  {[
-                    { step: '📥', text: 'Загрузите CSV' },
-                    { step: '🔍', text: 'Автоматический анализ' },
-                    { step: '📊', text: 'Детальный отчёт' },
-                    { step: '💡', text: 'Рекомендации' }
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3 group">
-                      <div className="flex-shrink-0 w-10 h-10 bg-white border border-blue-200 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                        {item.step}
+
+                {/* Колонка информационных карточек (4/12 ширины) */}
+                <div className="lg:col-span-4">
+                  <div className="sticky top-6 space-y-5">
+                    {/* Компактная карточка "Как это работает" */}
+                    <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-lg p-5 border border-blue-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl">
+                          <span className="text-2xl text-white">⚙️</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800">Как это работает</h2>
                       </div>
-                      <span className="text-gray-700 font-medium text-sm">{item.text}</span>
+                      <div className="space-y-3.5">
+                        {[
+                          { step: '📥', text: 'Загрузите CSV' },
+                          { step: '🔍', text: 'Автоматический анализ' },
+                          { step: '📊', text: 'Детальный отчёт' },
+                          { step: '💡', text: 'Рекомендации' }
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3 group">
+                            <div className="flex-shrink-0 w-10 h-10 bg-white border border-blue-200 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                              {item.step}
+                            </div>
+                            <span className="text-gray-700 font-medium text-sm">{item.text}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+
+                    {/* Компактная карточка "Что проверяется" */}
+                    <div className="bg-gradient-to-br from-green-50 to-white rounded-2xl shadow-lg p-5 border border-green-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2.5 bg-gradient-to-r from-green-500 to-green-600 rounded-xl">
+                          <span className="text-2xl text-white">✅</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800">Что проверяется</h2>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {[
+                          'Пропуски',
+                          'Дубликаты',
+                          'Статистика',
+                          'Уникальные значения',
+                          'Формат данных',
+                          'Заполненность'
+                        ].map((item, idx) => (
+                          <div key={idx} className="bg-white/70 rounded-lg p-2.5 text-center border border-green-100">
+                            <span className="text-green-700 font-medium text-xs md:text-sm">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Компактная карточка "Форматы" */}
+                    <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-lg p-5 border border-purple-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2.5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl">
+                          <span className="text-2xl text-white">📁</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800">Форматы</h2>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-white/80 rounded-xl border border-purple-100">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
+                              <span className="text-blue-700 font-mono font-bold text-sm">.CSV</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-800 text-sm">CSV файл</p>
+                              <p className="text-gray-500 text-xs">UTF-8, до 10MB</p>
+                            </div>
+                          </div>
+                          <div className="px-2.5 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-xs font-bold rounded-full">
+                            ✅
+                          </div>
+                        </div>
+                        <div className="text-center pt-2">
+                          <p className="text-gray-500 text-xs">
+                            Также: .XLSX, .XLS (скоро)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Компактная карточка "Что проверяется" */}
-              <div className="bg-gradient-to-br from-green-50 to-white rounded-2xl shadow-lg p-5 border border-green-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 bg-gradient-to-r from-green-500 to-green-600 rounded-xl">
-                    <span className="text-2xl text-white">✅</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-800">Что проверяется</h2>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    'Пропуски',
-                    'Дубликаты',
-                    'Статистика',
-                    'Уникальные значения',
-                    'Формат данных',
-                    'Заполненность'
-                  ].map((item, idx) => (
-                    <div key={idx} className="bg-white/70 rounded-lg p-2.5 text-center border border-green-100">
-                      <span className="text-green-700 font-medium text-xs md:text-sm">{item}</span>
-                    </div>
-                  ))}
+              {/* Нижняя часть: Список датасетов на всю ширину */}
+              <div className="mt-6 md:mt-8">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100">
+                  <DatasetList />
                 </div>
               </div>
+            </>
+          } />
 
-              {/* Компактная карточка "Форматы" */}
-              <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-lg p-5 border border-purple-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl">
-                    <span className="text-2xl text-white">📁</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-800">Форматы</h2>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-white/80 rounded-xl border border-purple-100">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
-                        <span className="text-blue-700 font-mono font-bold text-sm">.CSV</span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800 text-sm">CSV файл</p>
-                        <p className="text-gray-500 text-xs">UTF-8, до 10MB</p>
-                      </div>
-                    </div>
-                    <div className="px-2.5 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-xs font-bold rounded-full">
-                      ✅
-                    </div>
-                  </div>
-                  <div className="text-center pt-2">
-                    <p className="text-gray-500 text-xs">
-                      Также: .XLSX, .XLS (скоро)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Нижняя часть: Список датасетов на всю ширину */}
-        <div className="mt-6 md:mt-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100">
-            <DatasetList />
-          </div>
-        </div>
+          {/* Страница деталей датасета */}
+          <Route path="/dataset/:id" element={<DatasetDetails />} />
+        </Routes>
       </main>
 
       {/* Футер */}
