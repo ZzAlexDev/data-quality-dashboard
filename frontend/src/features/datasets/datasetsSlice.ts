@@ -39,15 +39,16 @@ export const fetchDatasets = createAsyncThunk(
 // 2. Thunk для загрузки нового файла (ОСНОВНОЙ!)
 export const uploadDataset = createAsyncThunk(
     'datasets/upload',
-    async (file: File, { rejectWithValue }) => {
+    async (payload: { file: File; customName?: string }, { rejectWithValue }) => {
         try {
-            const response = await datasetsApi.uploadFile(file);
-            return response.data; // Созданный Dataset
+            const response = await datasetsApi.uploadFile(payload.file, payload.customName);
+            return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || error.message);
         }
     }
 );
+
 
 // 3. Thunk для запуска анализа датасета
 export const analyzeDataset = createAsyncThunk(

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { uploadDataset, clearError } from '../datasets/datasetsSlice';
-import { FaUpload, FaFileCsv, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaUpload, FaTimes } from 'react-icons/fa';
 
 const FileUploader = () => {
     const dispatch = useAppDispatch();
@@ -34,20 +34,15 @@ const FileUploader = () => {
         }
 
         try {
-            // Диспатчим thunk для загрузки файла
-            await dispatch(uploadDataset(file)).unwrap();
+            // ПЕРЕДАЁМ ОБЪЕКТ С customName
+            await dispatch(uploadDataset({
+                file,
+                customName: customName || undefined
+            })).unwrap();
 
-            // Сброс формы после успешной загрузки
-            setFile(null);
-            setCustomName('');
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-
-            alert('Файл успешно загружен! Можете запустить анализ.');
+            // Сброс формы...
         } catch (err) {
             console.error('Ошибка загрузки:', err);
-            // Ошибка уже будет в Redux state (error)
         }
     };
 
