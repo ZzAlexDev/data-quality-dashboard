@@ -1,0 +1,9 @@
+id,name,age,email,department,salary
+1,Иван,25,ivan@mail.ru,IT,50000
+2,Мария,30,maria@yandex.ru,HR,45000
+3,Алексей,,alex@mail.ru,IT,55000
+4,Ольга,28,,Sales,48000
+5,Дмитрий,42,dmitry@mail.ru,IT,60000
+6,Анна,31,anna@yandex.ru,HR,47000
+7,Иван,25,ivan@mail.ru,IT,50000
+8,Сергей,29,sergey@gmail.com,,52000
