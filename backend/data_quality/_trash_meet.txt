@@ -1,0 +1,68 @@
+    
+    # ============================================================================
+    # ПРИВАТНЫЙ МЕТОД ДЛЯ ИМИТАЦИИ АНАЛИЗА (ВРЕМЕННЫЙ)
+    # ============================================================================
+    def _simulate_analysis(self, dataset):
+        """
+        Временный метод для имитации анализа.
+        Позже заменим на реальную логику с pandas.
+        """
+        # Создаём тестовые проверки
+        DataCheck.objects.create(
+            dataset=dataset,
+            check_type='missing',
+            result_json={
+                'total_rows': 100,
+                'missing_cells': 5,
+                'missing_percentage': 5.0,
+                'columns_with_missing': {'email': 3, 'phone': 2}
+            }
+        )
+        
+        DataCheck.objects.create(
+            dataset=dataset,
+            check_type='duplicates',
+            result_json={
+                'total_rows': 100,
+                'duplicate_rows': 2,
+                'duplicate_percentage': 2.0
+            }
+        )
+        
+        DataCheck.objects.create(
+            dataset=dataset,
+            check_type='statistics',
+            result_json={
+                'numeric_columns': {
+                    'age': {'min': 18, 'max': 65, 'mean': 32.5, 'std': 12.1}
+                },
+                'text_columns': {
+                    'name': {'unique_values': 95, 'most_common': 'Иван'}
+                }
+            }
+        )
+        
+        # Создаём сводный отчёт
+        Report.objects.create(
+            dataset=dataset,
+            summary='Найдено 7 проблем: 5 пропущенных значений и 2 дубликата. Требуется очистка данных.',
+            issues_count=7
+        )
+        
+        print(f"✅ Имитация анализа завершена для {dataset.name}")
+
+
+
+
+def _simulate_analysis(self, dataset):
+    """
+    РЕАЛЬНЫЙ анализ CSV файла с помощью pandas.
+    Заменяет старую имитацию.
+    """
+    try:
+        analyzer = CSVAnalyzer(dataset)
+        analyzer.analyze()
+        return True
+    except Exception as e:
+        print(f"❌ Ошибка при анализе: {str(e)}")
+        raise

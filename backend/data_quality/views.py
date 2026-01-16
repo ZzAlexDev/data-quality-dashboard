@@ -1,41 +1,29 @@
-# Импортируем необходимые модули Django и DRF
+"""
+views.py - Views для API Data Quality Dashboard
+"""
+
 from rest_framework import viewsets, status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# Импортируем наши модели и сериализаторы
 from .models import Dataset, DataCheck, Report
 from .serializers import DatasetSerializer, DataCheckSerializer, ReportSerializer
 
 # ============================================================================
-# 1. DATASET VIEWSET - ОСНОВНОЙ КОНТРОЛЛЕР ДЛЯ РАБОТЫ С ДАТАСЕТАМИ
+# 1. DATASET VIEWSET - ОСНОВНОЙ КОНТРОЛЛЕР
 # ============================================================================
 class DatasetViewSet(viewsets.ModelViewSet):
     """
-    ViewSet для полного CRUD датасетов.
-    Автоматически предоставляет:
-    - GET    /api/datasets/           - список всех датасетов
-    - POST   /api/datasets/           - создание нового датасета
-    - GET    /api/datasets/{id}/      - получение конкретного датасета
-    - PUT    /api/datasets/{id}/      - полное обновление датасета
-    - PATCH  /api/datasets/{id}/      - частичное обновление датасета
-    - DELETE /api/datasets/{id}/      - удаление датасета
+    ViewSet для работы с датасетами.
+    Предоставляет полный CRUD + кастомное действие analyze.
     """
     
-    # 1.1. Какие данные будем обрабатывать
     queryset = Dataset.objects.all().prefetch_related('checks')
-    # prefetch_related оптимизирует запросы к связанным проверкам
-    
-    # 1.2. Какой сериализатор использовать
     serializer_class = DatasetSerializer
-    
-    # 1.3. Какие парсеры разрешены (для загрузки файлов)
     parser_classes = [MultiPartParser, FormParser]
-    
-    # 1.4. Права доступа (пока разрешаем всё)
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny]  # Позже заменим на IsAuthenticated
     
     # ============================================================================
     # КАСТОМНОЕ ДЕЙСТВИЕ: АНАЛИЗ ДАТАСЕТА
@@ -43,19 +31,21 @@ class DatasetViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='analyze')
     def analyze_dataset(self, request, pk=None):
         """
-        Запускает анализ конкретного датасета.
+        Запускает РЕАЛЬНЫЙ анализ датасета с помощью pandas.
         Доступно по URL: POST /api/datasets/{id}/analyze/
         """
-        # Получаем объект датасета по ID из URL
+        # Получаем объект датасета
         dataset = self.get_object()
         
-        print(f"🚀 Запускаем анализ датасета: {dataset.name}")
+        print(f"🚀 Запускаем РЕАЛЬНЫЙ анализ датасета: {dataset.name}")
         
-        # Здесь будет реальная логика анализа с pandas
-        # Пока имитируем успешный анализ
         try:
-            # ИМИТАЦИЯ АНАЛИЗА (позже заменим на реальный код с pandas)
-            self._simulate_analysis(dataset)
+            # Импортируем анализатор (импортируем здесь чтобы избежать циклических импортов)
+            from .analyzer import CSVAnalyzer
+            
+            # Запускаем реальный анализ
+            analyzer = CSVAnalyzer(dataset)
+            analyzer.analyze()
             
             # Обновляем статус датасета
             dataset.status = 'completed'
@@ -74,64 +64,13 @@ class DatasetViewSet(viewsets.ModelViewSet):
             dataset.status = 'failed'
             dataset.save()
             
+            print(f"❌ Ошибка при анализе: {str(e)}")
+            
             return Response({
                 'status': 'error',
                 'message': f'Ошибка при анализе: {str(e)}',
                 'dataset_id': dataset.id
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    # ============================================================================
-    # ПРИВАТНЫЙ МЕТОД ДЛЯ ИМИТАЦИИ АНАЛИЗА (ВРЕМЕННЫЙ)
-    # ============================================================================
-    def _simulate_analysis(self, dataset):
-        """
-        Временный метод для имитации анализа.
-        Позже заменим на реальную логику с pandas.
-        """
-        # Создаём тестовые проверки
-        DataCheck.objects.create(
-            dataset=dataset,
-            check_type='missing',
-            result_json={
-                'total_rows': 100,
-                'missing_cells': 5,
-                'missing_percentage': 5.0,
-                'columns_with_missing': {'email': 3, 'phone': 2}
-            }
-        )
-        
-        DataCheck.objects.create(
-            dataset=dataset,
-            check_type='duplicates',
-            result_json={
-                'total_rows': 100,
-                'duplicate_rows': 2,
-                'duplicate_percentage': 2.0
-            }
-        )
-        
-        DataCheck.objects.create(
-            dataset=dataset,
-            check_type='statistics',
-            result_json={
-                'numeric_columns': {
-                    'age': {'min': 18, 'max': 65, 'mean': 32.5, 'std': 12.1}
-                },
-                'text_columns': {
-                    'name': {'unique_values': 95, 'most_common': 'Иван'}
-                }
-            }
-        )
-        
-        # Создаём сводный отчёт
-        Report.objects.create(
-            dataset=dataset,
-            summary='Найдено 7 проблем: 5 пропущенных значений и 2 дубликата. Требуется очистка данных.',
-            issues_count=7
-        )
-        
-        print(f"✅ Имитация анализа завершена для {dataset.name}")
-
 
 # ============================================================================
 # 2. FILE UPLOAD VIEW - ПРОСТОЙ ВЬЮ ДЛЯ ЗАГРУЗКИ ФАЙЛОВ
@@ -140,8 +79,6 @@ class FileUploadView(APIView):
     """
     Простой API endpoint только для загрузки CSV файлов.
     Доступно по URL: POST /api/upload/
-    
-    Альтернатива DatasetViewSet.create() - проще для понимания.
     """
     
     parser_classes = [MultiPartParser, FormParser]
@@ -204,9 +141,8 @@ class FileUploadView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 # ============================================================================
-# 3. ДОПОЛНИТЕЛЬНЫЕ VIEWSET ДЛЯ ПРОВЕРОК И ОТЧЁТОВ (ОПЦИОНАЛЬНО)
+# 3. ДОПОЛНИТЕЛЬНЫЕ VIEWSET ДЛЯ ПРОВЕРОК И ОТЧЁТОВ
 # ============================================================================
 class DataCheckViewSet(viewsets.ReadOnlyModelViewSet):
     """
