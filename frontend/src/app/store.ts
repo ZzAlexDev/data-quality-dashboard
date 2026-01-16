@@ -1,12 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
-// Позже сюда импортируем редюсеры
+import datasetsReducer from '../features/datasets/datasetsSlice'; // Добавляем импорт
 
 export const store = configureStore({
     reducer: {
-        // Здесь будут редюсеры (например, datasets: datasetsReducer)
+        datasets: datasetsReducer, // Регистрируем редюсер
     },
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: {
+                // Игнорируем проверку для File объектов в действиях (это нормально)
+                ignoredActions: ['datasets/upload/pending'],
+                ignoredPaths: ['datasets.upload.file'],
+            },
+        }),
 });
 
-// Типы для TypeScript
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
