@@ -80,6 +80,17 @@ const datasetsSlice = createSlice({
         setCurrentDataset: (state, action: PayloadAction<Dataset | null>) => {
             state.currentDataset = action.payload;
         },
+
+        updateDataset: (state, action: PayloadAction<Dataset>) => {
+            const index = state.items.findIndex(d => d.id === action.payload.id);
+            if (index !== -1) {
+                state.items[index] = action.payload;
+            }
+            // Также обновляем currentDataset если он активен
+            if (state.currentDataset?.id === action.payload.id) {
+                state.currentDataset = action.payload;
+            }
+        },
     },
     extraReducers: (builder) => {
         // Обработка всех состояний асинхронных thunk'ов
@@ -149,5 +160,5 @@ const datasetsSlice = createSlice({
 });
 
 // Экспортируем синхронные действия (actions) и редюсер
-export const { setUploadProgress, clearError, setCurrentDataset } = datasetsSlice.actions;
+export const { setUploadProgress, clearError, setCurrentDataset, updateDataset } = datasetsSlice.actions;
 export default datasetsSlice.reducer;

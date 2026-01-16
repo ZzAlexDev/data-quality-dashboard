@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchDatasets, analyzeDataset } from './datasetsSlice';
-import { DatasetStatus } from '../../services/api';
+import { DatasetStatus } from '../../services/api'; //
 
 const DatasetList = () => {
-    console.log('=== RENDER DatasetList ==='); // ← ДЕБАГ
+    console.log('=== RENDER DatasetList ===');
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -13,7 +13,15 @@ const DatasetList = () => {
         (state) => state.datasets
     );
 
-    console.log('Datasets data:', datasets); // ← ДЕБАГ
+    // Мемоизируем датасеты чтобы избежать лишних рендеров
+    const memoizedDatasets = useMemo(() => datasets, [
+        datasets.length,
+        // Ключевые поля для сравнения
+        ...datasets.map(d => `${d.id}-${d.status}-${d.checks?.length}`)
+    ]);
+
+    console.log('Datasets data:', memoizedDatasets);
+    // ← ДЕБАГ
 
     useEffect(() => {
         if (datasets.length === 0 && !loading) {
