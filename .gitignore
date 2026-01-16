@@ -44,3 +44,7 @@ dist/
 
 # Docker
 .dockerignore
+
+
+# Test data files
+*.csv
