@@ -20,10 +20,9 @@ const DatasetDetails = () => {
     // === АВТООБНОВЛЕНИЕ СТАТУСА ===
     useEffect(() => {
         // Проверка на существование датасета
-        if (!dataset) return;
 
-        // Запускаем только для статуса "processing"
-        if (dataset.status !== 'processing') return;
+
+        if (!dataset || dataset.status !== 'processing') return;
 
         console.log('🔄 Запускаем автообновление для датасета', dataset.id);
 
@@ -36,7 +35,9 @@ const DatasetDetails = () => {
             try {
                 console.log('📡 Опрашиваем статус датасета', dataset.id);
                 const response = await fetch(`http://localhost:8000/api/datasets/${dataset.id}/`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 const freshDataset = await response.json();
+
 
                 if (freshDataset.status !== dataset.status) {
                     console.log('✅ Статус обновился!');
@@ -82,6 +83,11 @@ const DatasetDetails = () => {
         const data = check.result_json || {};
         const missingPercentage = data.missing_percentage || 0;
 
+        const QUALITY_THRESHOLDS = {
+            EXCELLENT: 5,
+            GOOD: 20
+        } as const;
+
         return (
             <div className="space-y-6">
                 {/* Статистика в карточках */}
@@ -103,7 +109,7 @@ const DatasetDetails = () => {
                     <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
                         <p className="text-sm text-gray-500 mb-1">Процент</p>
                         <p className="text-2xl font-bold text-amber-700">
-                            {missingPercentage.toFixed(1)}%
+                            {(missingPercentage || 0).toFixed(1)}%
                         </p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                             <div
@@ -116,8 +122,8 @@ const DatasetDetails = () => {
                     <div className="bg-green-50 p-4 rounded-xl border border-green-100">
                         <p className="text-sm text-gray-500 mb-1">Качество</p>
                         <p className="text-2xl font-bold text-green-700">
-                            {missingPercentage < 5 ? 'Отлично' :
-                                missingPercentage < 20 ? 'Нормально' : 'Плохо'}
+                            {missingPercentage < QUALITY_THRESHOLDS.EXCELLENT ? 'Отлично' :
+                                missingPercentage < QUALITY_THRESHOLDS.GOOD ? 'Нормально' : 'Плохо'}
                         </p>
                     </div>
                 </div>
@@ -179,6 +185,7 @@ const DatasetDetails = () => {
     const renderDuplicates = (check: DataCheck) => {
         const data = check.result_json || {};
         const duplicatePercentage = data.duplicate_percentage || 0;
+        const DUPLICATE_THRESHOLD = 10; // порог для красного цвета
 
         return (
             <div className="space-y-6">
@@ -204,7 +211,7 @@ const DatasetDetails = () => {
                         </p>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                             <div
-                                className={`h-2 rounded-full ${duplicatePercentage > 10 ? 'bg-red-500' : 'bg-amber-500'}`}
+                                className={`h-2 rounded-full ${duplicatePercentage > DUPLICATE_THRESHOLD ? 'bg-red-500' : 'bg-amber-500'}`}
                                 style={{ width: `${Math.min(duplicatePercentage, 100)}%` }}
                             ></div>
                         </div>
@@ -259,22 +266,22 @@ const DatasetDetails = () => {
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="text-center p-2 bg-blue-50 rounded">
                                                 <p className="text-xs text-gray-500">Мин</p>
-                                                <p className="font-bold">{stats.min?.toLocaleString()}</p>
+                                                <p className="font-bold">{stats.min?.toLocaleString() ?? 'N/A'}</p>
                                             </div>
                                             <div className="text-center p-2 bg-blue-50 rounded">
                                                 <p className="text-xs text-gray-500">Макс</p>
-                                                <p className="font-bold">{stats.max?.toLocaleString()}</p>
+                                                <p className="font-bold">{stats.max?.toLocaleString() ?? 'N/A'}</p>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="text-center p-2 bg-green-50 rounded">
                                                 <p className="text-xs text-gray-500">Среднее</p>
-                                                <p className="font-bold">{stats.mean?.toFixed(2)}</p>
+                                                <p className="font-bold">{stats.mean?.toFixed(2) ?? 'N/A'}</p>
                                             </div>
                                             <div className="text-center p-2 bg-green-50 rounded">
                                                 <p className="text-xs text-gray-500">Отклонение</p>
-                                                <p className="font-bold">{stats.std?.toFixed(2)}</p>
+                                                <p className="font-bold">{stats.std?.toFixed(2) ?? 'N/A'}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -303,7 +310,7 @@ const DatasetDetails = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-gray-500">Уникальных значений</p>
-                                                    <p className="font-bold text-lg">{stats.unique_values}</p>
+                                                    <p className="font-bold text-lg">{stats.unique_values ?? 0}</p>
                                                 </div>
                                             </div>
                                             {stats.most_common && (
@@ -320,7 +327,7 @@ const DatasetDetails = () => {
                                             <div className="flex justify-between text-sm text-gray-500 mb-1">
                                                 <span>Уникальность:</span>
                                                 <span>
-                                                    {data.total_rows
+                                                    {stats.unique_values && data.total_rows
                                                         ? Math.round((stats.unique_values / data.total_rows) * 100)
                                                         : 0}%
                                                 </span>
