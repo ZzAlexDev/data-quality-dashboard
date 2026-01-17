@@ -169,11 +169,8 @@ const DatasetList = () => {
                                         </button>
                                     )}
 
-                                    {dataset.status === 'completed' && (
-                                        <button
-                                            onClick={() => navigate(`/dataset/${dataset.id}`)}
-                                            className="px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 flex items-center justify-center gap-2"
-                                        >
+                                    {dataset.status === 'completed' && dataset.report && (
+                                        <button onClick={() => navigate(`/dataset/${dataset.id}#report`)}>
                                             📄 Отчёт
                                         </button>
                                     )}

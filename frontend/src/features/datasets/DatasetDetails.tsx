@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchDatasets, analyzeDataset, updateDataset } from './datasetsSlice';
 import { DataCheck } from '../../services/api';
 import { datasetsApi } from '../../services/api';
 
+
+
 const DatasetDetails = () => {
+    const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'checks'>('overview');
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-
     const { items: datasets, loading, error } = useAppSelector(
         (state) => state.datasets
     );
@@ -20,9 +22,13 @@ const DatasetDetails = () => {
 
     // === АВТООБНОВЛЕНИЕ СТАТУСА ===
     useEffect(() => {
+
+
+        if (window.location.hash === '#report' && dataset?.report) {
+            setActiveTab('report');
+        }
+
         // Проверка на существование датасета
-
-
         if (!dataset || dataset.status !== 'processing') return;
 
         console.log('🔄 Запускаем автообновление для датасета', dataset.id);
@@ -467,130 +473,286 @@ const DatasetDetails = () => {
                     </div>
                 </div>
 
-                {/* Статус */}
-                <div className={`inline-flex items-center gap-3 px-5 py-3 rounded-xl ${dataset.status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' :
-                    dataset.status === 'processing' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
-                        dataset.status === 'failed' ? 'bg-red-100 text-red-800 border border-red-200' :
-                            'bg-blue-100 text-blue-800 border border-blue-200'
-                    }`}>
-                    <span className="text-2xl">
-                        {dataset.status === 'completed' ? '✅' :
-                            dataset.status === 'processing' ? '⚙️' :
-                                dataset.status === 'failed' ? '❌' : '📥'}
-                    </span>
-                    <div>
-                        <span className="font-semibold">{dataset.status_display}</span>
-                        <p className="text-sm opacity-80">
-                            {dataset.status === 'completed' ? 'Анализ завершён' :
-                                dataset.status === 'processing' ? 'Идёт обработка...' :
-                                    dataset.status === 'failed' ? 'Произошла ошибка' : 'Готов к анализу'}
-                        </p>
+                {/* Статус датасета */}
+                <div className="flex items-center gap-4 mb-8 p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <div className={`p-3 rounded-xl ${dataset.status === 'completed' ? 'bg-green-100' :
+                        dataset.status === 'processing' ? 'bg-yellow-100' :
+                            dataset.status === 'failed' ? 'bg-red-100' : 'bg-blue-100'
+                        }`}>
+                        <span className="text-2xl">
+                            {dataset.status === 'completed' ? '📈' :
+                                dataset.status === 'processing' ? '🔍' :
+                                    dataset.status === 'failed' ? '💥' : '📥'}
+                        </span>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800">
+                                    {dataset.status === 'completed' ? 'Анализ завершён' :
+                                        dataset.status === 'processing' ? 'Идёт обработка' :
+                                            dataset.status === 'failed' ? 'Ошибка анализа' : 'Готов к анализу'}
+                                </h3>
+                                <p className="text-gray-500 text-sm">
+                                    Статус: <span className="font-medium">{dataset.status_display}</span>
+                                </p>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                                <p>Загружен: {new Date(dataset.uploaded_at).toLocaleString('ru-RU')}</p>
+                                <p>Проверок: <span className="font-medium">{dataset.checks.length}</span></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Отчет если есть */}
-            {dataset.report && (
-                <div className="mb-8 bg-white rounded-2xl shadow-lg p-6">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">📋 Сводный отчет</h3>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <div className="text-gray-700 whitespace-pre-line leading-relaxed">
-                            {dataset.report.summary.split(' - ').map((line, index) => (
-                                <div key={index} className="mb-2">
-                                    {line.trim()}
+
+            {/* Табы для навигации */}
+            <div className="flex border-b border-gray-200 mb-8 overflow-x-auto">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`flex-1 px-6 py-3 text-center font-medium transition-colors whitespace-nowrap
+            ${activeTab === 'overview'
+                            ? 'border-b-2 border-blue-500 text-blue-600 bg-blue-50/50'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                >
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="text-lg">👁️</span>
+                        <span>Обзор</span>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab('checks')}
+                    className={`flex-1 px-6 py-3 text-center font-medium transition-colors whitespace-nowrap
+            ${activeTab === 'checks'
+                            ? 'border-b-2 border-purple-500 text-purple-600 bg-purple-50/50'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                >
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="text-lg">🔍</span>
+                        <span>Проверки данных</span>
+                        {dataset.checks.length > 0 && (
+                            <span className="px-2 py-0.5 text-xs bg-gray-200 rounded-full">
+                                {dataset.checks.length}
+                            </span>
+                        )}
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab('report')}
+                    className={`flex-1 px-6 py-3 text-center font-medium transition-colors whitespace-nowrap
+            ${activeTab === 'report'
+                            ? 'border-b-2 border-green-500 text-green-600 bg-green-50/50'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                    disabled={!dataset.report}
+                >
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="text-lg">📄</span>
+                        <span>Сводный отчёт</span>
+                        {dataset.report && (
+                            <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded-full">
+                                {dataset.report.issues_count} проблем
+                            </span>
+                        )}
+                    </div>
+                </button>
+            </div>
+
+            {/* Контент табов */}
+            <div className="mt-6">
+                {activeTab === 'overview' && (
+                    <div className="space-y-8">
+                        {/* Текущий контент страницы - всё что было после табов */}
+                        {/* Отчет если есть */}
+                        {dataset.report && (
+                            <div className="mb-8 bg-white rounded-2xl shadow-lg p-6">
+                                <h3 className="text-xl font-bold text-gray-800 mb-4">📋 Краткий отчёт</h3>
+                                <div className="p-4 bg-gray-50 rounded-lg">
+                                    <div className="text-gray-700 whitespace-pre-line leading-relaxed">
+                                        {dataset.report.summary.split('\n').map((line, index) => (
+                                            <div key={index} className="mb-2">
+                                                {line.trim()}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-3 flex items-center gap-2">
+                                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                            Проблем: {dataset.report.issues_count}
+                                        </span>
+                                        <span className="text-gray-500 text-sm">
+                                            Создан: {new Date(dataset.report.generated_at).toLocaleString('ru-RU')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Результаты проверок - ПЕРВЫЕ 2 для обзора */}
+                        {dataset.checks.slice(0, 2).map((check) => {
+                            let content;
+
+                            switch (check.check_type) {
+                                case 'missing':
+                                    content = renderMissingValues(check);
+                                    break;
+                                case 'duplicates':
+                                    content = renderDuplicates(check);
+                                    break;
+                                case 'statistics':
+                                    content = renderStatistics(check);
+                                    break;
+                                default:
+                                    content = (
+                                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-auto">
+                                            {JSON.stringify(check.result_json, null, 2)}
+                                        </pre>
+                                    );
+                            }
+
+                            return (
+                                <div key={check.id} className="bg-white rounded-2xl shadow-lg p-6">
+                                    {/* Заголовок проверки */}
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className={`p-3 rounded-xl ${check.check_type === 'missing' ? 'bg-red-100' :
+                                            check.check_type === 'duplicates' ? 'bg-yellow-100' :
+                                                'bg-blue-100'
+                                            }`}>
+                                            <span className="text-2xl">
+                                                {check.check_type === 'missing' ? '🔍' :
+                                                    check.check_type === 'duplicates' ? '♻️' : '📊'}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800">
+                                                {check.check_type === 'missing' ? 'Пропущенные значения' :
+                                                    check.check_type === 'duplicates' ? 'Дубликаты строк' :
+                                                        'Статистика данных'}
+                                            </h3>
+                                            <p className="text-gray-500 text-sm">
+                                                Выполнено: {new Date(check.created_at).toLocaleString('ru-RU')}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Контент проверки */}
+                                    {content}
+                                </div>
+                            );
+                        })}
+
+                        {dataset.checks.length > 2 && (
+                            <div className="text-center py-4">
+                                <button
+                                    onClick={() => setActiveTab('checks')}
+                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                    Показать все {dataset.checks.length} проверок →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'checks' && (
+                    <div className="space-y-8">
+                        <div className="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                                <span className="text-3xl">🔍</span>
+                                Все проверки данных
+                                <span className="text-sm font-normal bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                                    {dataset.checks.length} проверок
+                                </span>
+                            </h3>
+
+                            {dataset.checks.map((check) => (
+                                <div key={check.id} className="mb-8 last:mb-0">
+                                    {/* Твой существующий код рендера проверок */}
+                                    {check.check_type === 'missing' && renderMissingValues(check)}
+                                    {check.check_type === 'duplicates' && renderDuplicates(check)}
+                                    {check.check_type === 'statistics' && renderStatistics(check)}
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-3 flex items-center gap-2">
-                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                                Проблем: {dataset.report.issues_count}
-                            </span>
-                            <span className="text-gray-500 text-sm">
-                                Создан: {new Date(dataset.report.generated_at).toLocaleString('ru-RU')}
-                            </span>
+                    </div>
+                )}
+
+                {activeTab === 'report' && dataset.report && (
+                    <div className="bg-white rounded-2xl shadow-lg p-6">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                    <span className="text-3xl">📄</span>
+                                    Полный сводный отчёт
+                                </h3>
+                                <p className="text-gray-600 mt-2">
+                                    Создан: {new Date(dataset.report.generated_at).toLocaleString('ru-RU')}
+                                </p>
+                            </div>
+                            <div className="px-4 py-2 bg-red-100 text-red-700 rounded-full text-lg font-bold">
+                                {dataset.report.issues_count} проблем
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
 
-            {/* Результаты проверок */}
-            <div className="space-y-8">
-                {dataset.checks.length === 0 ? (
-                    // Нет проверок
-                    <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-                        <div className="text-5xl mb-4">📊</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-3">
-                            {dataset.status === 'processing' ? 'Анализ выполняется...' : 'Анализ не выполнен'}
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            {dataset.status === 'uploaded'
-                                ? 'Запустите анализ для проверки качества данных.'
-                                : 'Пожалуйста, подождите...'}
-                        </p>
-                        {dataset.status === 'uploaded' && (
-                            <button
-                                onClick={handleAnalyze}
-                                disabled={loading}
-                                className="px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:bg-gray-400"
-                            >
-                                🚀 Запустить анализ
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    // Отображение проверок
-                    dataset.checks.map((check) => {
-                        let content;
+                        <div className="prose prose-lg max-w-none">
+                            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                                <h4 className="text-xl font-bold text-gray-800 mb-4">📋 Основные выводы:</h4>
+                                <div className="space-y-4 text-gray-700 leading-relaxed">
+                                    {dataset.report.summary.split('\n\n').map((section, idx) => (
+                                        <div key={idx} className="p-4 bg-white rounded-lg border border-gray-100">
+                                            {section.split('\n').map((line, lineIdx) => (
+                                                <p key={lineIdx} className="mb-2 last:mb-0">
+                                                    {line.trim()}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
 
-                        switch (check.check_type) {
-                            case 'missing':
-                                content = renderMissingValues(check);
-                                break;
-                            case 'duplicates':
-                                content = renderDuplicates(check);
-                                break;
-                            case 'statistics':
-                                content = renderStatistics(check);
-                                break;
-                            default:
-                                content = (
-                                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-auto">
-                                        {JSON.stringify(check.result_json, null, 2)}
-                                    </pre>
-                                );
-                        }
-
-                        return (
-                            <div key={check.id} className="bg-white rounded-2xl shadow-lg p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className={`p-3 rounded-xl ${check.check_type === 'missing' ? 'bg-red-100' :
-                                        check.check_type === 'duplicates' ? 'bg-yellow-100' :
-                                            'bg-blue-100'
-                                        }`}>
-                                        <span className="text-2xl">
-                                            {check.check_type === 'missing' ? '🔍' :
-                                                check.check_type === 'duplicates' ? '♻️' : '📊'}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-800">
-                                            {check.check_type === 'missing' ? 'Пропущенные значения' :
-                                                check.check_type === 'duplicates' ? 'Дубликаты строк' :
-                                                    'Статистика данных'}
-                                        </h3>
-                                        <p className="text-gray-500 text-sm">
-                                            Выполнено: {new Date(check.created_at).toLocaleString('ru-RU')}
-                                        </p>
+                            {/* Детали по проблемам если есть */}
+                            {dataset.checks.length > 0 && (
+                                <div className="mt-8">
+                                    <h4 className="text-xl font-bold text-gray-800 mb-4">🔍 Детали проверок:</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {dataset.checks.map((check) => (
+                                            <div key={check.id} className="bg-gray-50 p-4 rounded-lg">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-lg">
+                                                        {check.check_type === 'missing' ? '📍' :
+                                                            check.check_type === 'duplicates' ? '🔄' : '📊'}
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        {check.check_type === 'missing' ? 'Пропуски' :
+                                                            check.check_type === 'duplicates' ? 'Дубликаты' : 'Статистика'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-600">
+                                                    Завершено: {new Date(check.created_at).toLocaleString('ru-RU')}
+                                                </p>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                                {content}
-                            </div>
-                        );
-                    })
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'report' && !dataset.report && (
+                    <div className="text-center py-12">
+                        <div className="text-5xl mb-4">📭</div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-3">Отчёт недоступен</h3>
+                        <p className="text-gray-600">Сводный отчёт ещё не был сгенерирован.</p>
+                    </div>
                 )}
             </div>
         </div>
+
     );
 };
+
+
 
 export default DatasetDetails; // ← default export
