@@ -15,19 +15,27 @@ const DatasetList = () => {
 
     // Мемоизируем датасеты чтобы избежать лишних рендеров
     const memoizedDatasets = useMemo(() => datasets, [
-        datasets.length,
-        // Ключевые поля для сравнения
-        ...datasets.map(d => `${d.id}-${d.status}-${d.checks?.length}`)
+        // Используем JSON.stringify для создания стабильной зависимости
+        JSON.stringify(datasets.map(d => ({
+            id: d.id,
+            status: d.status,
+            checksLength: d.checks?.length || 0
+        })))
     ]);
 
     console.log('Datasets data:', memoizedDatasets);
     // ← ДЕБАГ
 
+    // useEffect(() => {
+    //     if (datasets.length === 0 && !loading) {
+    //         dispatch(fetchDatasets());
+    //     }
+    // }, [dispatch, datasets.length, loading]);
+
     useEffect(() => {
-        if (datasets.length === 0 && !loading) {
-            dispatch(fetchDatasets());
-        }
-    }, [dispatch, datasets.length, loading]);
+        dispatch(fetchDatasets());
+    }, [dispatch]);
+
 
     const handleAnalyze = (dataset: any) => {
         if (dataset.status === 'uploaded') {

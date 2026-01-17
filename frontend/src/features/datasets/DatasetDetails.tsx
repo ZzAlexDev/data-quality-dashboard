@@ -16,72 +16,6 @@ const DatasetDetails = () => {
     const datasetId = parseInt(id || '0');
     const dataset = datasets.find(d => d.id === datasetId);
 
-    // === АВТООБНОВЛЕНИЕ СТАТУСА (ПРОСТАЯ ВЕРСИЯ) ===
-    useEffect(() => {
-        // 1. Проверяем что датасет существует
-        if (!dataset) return;
-
-        // 2. Запускаем автообновление только если статус "processing"
-        if (dataset.status !== 'processing') return;
-
-        console.log('🔄 Запускаем автообновление для датасета', dataset.id);
-
-        let isPollingActive = true;
-        let timeoutId: NodeJS.Timeout;
-
-        const pollStatus = async () => {
-            // 3. Проверяем что опрос ещё активен
-            if (!isPollingActive) return;
-
-            try {
-                console.log('📡 Опрашиваем статус датасета', dataset.id);
-
-                // 4. Загружаем только текущий датасет (не все!)
-                const response = await fetch(`http://localhost:8000/api/datasets/${dataset.id}/`);
-                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-
-                const freshDataset = await response.json();
-                console.log('📊 Текущий статус:', freshDataset.status);
-
-                // 5. Если статус изменился
-                if (freshDataset.status !== dataset.status) {
-                    console.log('✅ Статус обновился!');
-                    dispatch(updateDataset(freshDataset));
-
-                    // 6. Останавливаем если анализ завершился
-                    if (freshDataset.status === 'completed' || freshDataset.status === 'failed') {
-                        console.log('🏁 Анализ завершён, останавливаем опрос');
-                        isPollingActive = false;
-                        return;
-                    }
-                }
-
-                // 7. Продолжаем опрос если всё ещё "processing"
-                if (isPollingActive && freshDataset.status === 'processing') {
-                    timeoutId = setTimeout(pollStatus, 3000);
-                }
-
-            } catch (error) {
-                console.error('❌ Ошибка опроса:', error);
-                // 8. Повтор через 5 секунд при ошибке
-                if (isPollingActive) {
-                    timeoutId = setTimeout(pollStatus, 5000);
-                }
-            }
-        };
-
-        // 9. Запускаем первый опрос
-        pollStatus();
-
-        // 10. Функция очистки (ВАЖНО!)
-        return () => {
-            console.log('🛑 Останавливаем автообновление');
-            isPollingActive = false;
-            if (timeoutId) clearTimeout(timeoutId);
-        };
-    }, [dataset, dispatch]); // Зависимости: dataset и dispatch
-
-
 
     // === АВТООБНОВЛЕНИЕ СТАТУСА ===
     useEffect(() => {
@@ -135,6 +69,8 @@ const DatasetDetails = () => {
             if (timeoutId) clearTimeout(timeoutId);
         };
     }, [dataset, dispatch]);    // Функция для запуска анализа
+
+
     const handleAnalyze = () => {
         if (dataset && dataset.status === 'uploaded') {
             dispatch(analyzeDataset(dataset.id));
