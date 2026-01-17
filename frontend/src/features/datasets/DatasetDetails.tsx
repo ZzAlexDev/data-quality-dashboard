@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchDatasets, analyzeDataset, updateDataset } from './datasetsSlice';
 import { DataCheck } from '../../services/api';
+import { datasetsApi } from '../../services/api';
 
 const DatasetDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -34,9 +35,10 @@ const DatasetDetails = () => {
 
             try {
                 console.log('📡 Опрашиваем статус датасета', dataset.id);
-                const response = await fetch(`http://localhost:8000/api/datasets/${dataset.id}/`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                const freshDataset = await response.json();
+
+                const response = await datasetsApi.getById(datasetId);
+                const freshDataset = response.data;
+
 
 
                 if (freshDataset.status !== dataset.status) {
