@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { fetchDatasets, analyzeDataset } from './datasetsSlice';
+import { fetchDatasets, analyzeDataset } from './DatasetsSlice';
 import { DatasetStatus } from '../../services/api'; //
 
 

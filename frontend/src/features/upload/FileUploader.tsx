@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { uploadDataset, clearError } from '../datasets/datasetsSlice';
+import { uploadDataset, clearError } from '../datasets/DatasetsSlice';
 import { FaUpload, FaTimes } from 'react-icons/fa';
 
 const FileUploader = () => {

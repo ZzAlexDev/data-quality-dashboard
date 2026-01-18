@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import datasetsReducer from '../features/datasets/datasetsSlice'; // Добавляем импорт
+import datasetsReducer from '../features/datasets/DatasetsSlice'; // Добавляем импорт
 
 export const store = configureStore({
     reducer: {
